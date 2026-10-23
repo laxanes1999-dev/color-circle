@@ -1,14 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ColorCircleFinal from "./ColorCircleFinal";
 import AgeCalculator from "./AgeCalculator";
 
+// Each task has its own link:  <site>/#/colour-circle   and   <site>/#/age-calculator
 const TABS = [
-  { id: "color", label: "Task 1: Colour Circle", view: <ColorCircleFinal /> },
-  { id: "age", label: "Task 2: Age Calculator", view: <AgeCalculator /> },
+  { path: "colour-circle", label: "Task 1: Colour Circle", view: <ColorCircleFinal /> },
+  { path: "age-calculator", label: "Task 2: Age Calculator", view: <AgeCalculator /> },
 ];
 
+// Hash routing works on GitHub Pages and localhost without any server rewrite rules.
+const getRoute = () => window.location.hash.replace(/^#\/?|\/$/g, "");
+
 export default function App() {
-  const [active, setActive] = useState("color");
+  const [route, setRoute] = useState(getRoute);
+
+  useEffect(() => {
+    const onHash = () => { setRoute(getRoute()); window.scrollTo(0, 0); };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  // empty or unknown hash -> first task
+  const active = TABS.find((t) => t.path === route) || TABS[0];
+
+  useEffect(() => {
+    document.title = active.label;
+  }, [active]);
 
   return (
     <>
@@ -29,27 +46,27 @@ export default function App() {
         }}
       >
         {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActive(t.id)}
+          <a
+            key={t.path}
+            href={`#/${t.path}`}
             style={{
               padding: "8px 16px",
-              border: 0,
               borderRadius: 999,
               cursor: "pointer",
               fontWeight: 600,
               fontSize: "0.9rem",
-              color: active === t.id ? "#fff" : "#374151",
-              background: active === t.id ? "#4338ca" : "transparent",
+              textDecoration: "none",
+              color: active.path === t.path ? "#fff" : "#374151",
+              background: active.path === t.path ? "#4338ca" : "transparent",
               transition: "all 0.2s",
             }}
           >
             {t.label}
-          </button>
+          </a>
         ))}
       </nav>
 
-      {TABS.find((t) => t.id === active).view}
+      {active.view}
     </>
   );
 }
